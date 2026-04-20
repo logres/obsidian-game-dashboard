@@ -2,8 +2,9 @@
   "id": "game-dashboard",
   "name": "Game Dashboard",
   "version": "0.1.0",
-  "minAppVersion": "1.6.0",
-  "description": "Manage a folder-based game library with a dedicated dashboard view.",
-  "author": "OpenAI Codex",
+  "minAppVersion": "1.11.4",
+  "description": "Manage a folder-based game library with a dedicated dashboard view, Steam import, and optional IGDB metadata.",
+  "author": "logres",
+  "authorUrl": "https://github.com/logres",
   "isDesktopOnly": false
 }

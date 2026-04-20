@@ -5,7 +5,6 @@ export interface GameDashboardSettings {
   mainNoteName: string;
   openNoteAfterCreate: boolean;
   igdbClientId: string;
-  igdbClientSecret: string;
 }
 
 export interface GameEntry {

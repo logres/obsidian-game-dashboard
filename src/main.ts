@@ -75,6 +75,7 @@ async function ensureFolder(plugin: Plugin, path: string): Promise<TFolder> {
 }
 
 export default class GameDashboardPlugin extends Plugin {
+  private static readonly IGDB_CLIENT_SECRET_KEY = "igdb-client-secret";
   settings: GameDashboardSettings = DEFAULT_SETTINGS;
   igdb = new IgdbClient(this);
   steam = new SteamClient();
@@ -123,11 +124,30 @@ export default class GameDashboardPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loaded = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as GameDashboardSettings & {
+      igdbClientSecret?: string;
+    };
+
+    const legacySecret = loaded.igdbClientSecret?.trim();
+    if (legacySecret && !this.getIgdbClientSecret()) {
+      this.app.secretStorage.setSecret(GameDashboardPlugin.IGDB_CLIENT_SECRET_KEY, legacySecret);
+    }
+
+    delete loaded.igdbClientSecret;
+    this.settings = loaded;
+    await this.saveData(this.settings);
   }
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+  }
+
+  getIgdbClientSecret(): string {
+    return this.app.secretStorage.getSecret(GameDashboardPlugin.IGDB_CLIENT_SECRET_KEY) ?? "";
+  }
+
+  async setIgdbClientSecret(value: string): Promise<void> {
+    this.app.secretStorage.setSecret(GameDashboardPlugin.IGDB_CLIENT_SECRET_KEY, value);
   }
 
   beginModalSession(): void {

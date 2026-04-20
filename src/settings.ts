@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, SecretComponent, Setting } from "obsidian";
 import type GameDashboardPlugin from "./main";
 import { GameDashboardSettings } from "./types";
 
@@ -6,8 +6,7 @@ export const DEFAULT_SETTINGS: GameDashboardSettings = {
   gamesRoot: "2-Knowledge/Media Library/Games",
   mainNoteName: "Game.md",
   openNoteAfterCreate: true,
-  igdbClientId: "",
-  igdbClientSecret: ""
+  igdbClientId: ""
 };
 
 export class GameDashboardSettingTab extends PluginSettingTab {
@@ -78,18 +77,16 @@ export class GameDashboardSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl)
+    const secretSetting = new Setting(containerEl)
       .setName("IGDB Client Secret")
-      .setDesc("Twitch application Client Secret used to request IGDB access tokens.")
-      .addText((text) =>
-        text
-          .setPlaceholder("Your Twitch Client Secret")
-          .setValue(this.plugin.settings.igdbClientSecret)
-          .onChange(async (value) => {
-            this.plugin.settings.igdbClientSecret = value.trim();
-            await this.plugin.saveSettings();
-          })
-      );
+      .setDesc("Stored with Obsidian SecretStorage and used only to request IGDB access tokens.");
+
+    secretSetting.controlEl.empty();
+    new SecretComponent(this.app, secretSetting.controlEl)
+      .setValue(this.plugin.getIgdbClientSecret())
+      .onChange(async (value) => {
+        await this.plugin.setIgdbClientSecret(value.trim());
+      });
 
     new Setting(containerEl)
       .setName("Open dashboard")

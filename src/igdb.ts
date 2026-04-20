@@ -161,7 +161,8 @@ export class IgdbClient {
   }
 
   private async getAccessToken(): Promise<string> {
-    if (!this.plugin.settings.igdbClientId || !this.plugin.settings.igdbClientSecret) {
+    const clientSecret = this.plugin.getIgdbClientSecret();
+    if (!this.plugin.settings.igdbClientId || !clientSecret) {
       throw new Error("IGDB Client ID / Client Secret 未配置。");
     }
 
@@ -170,7 +171,7 @@ export class IgdbClient {
     }
 
     const response = await requestUrl({
-      url: `https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(this.plugin.settings.igdbClientId)}&client_secret=${encodeURIComponent(this.plugin.settings.igdbClientSecret)}&grant_type=client_credentials`,
+      url: `https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(this.plugin.settings.igdbClientId)}&client_secret=${encodeURIComponent(clientSecret)}&grant_type=client_credentials`,
       method: "POST"
     });
 
