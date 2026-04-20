@@ -5,7 +5,9 @@
   "description": "Folder-based game dashboard plugin for Obsidian.",
   "scripts": {
     "build": "node esbuild.config.mjs",
-    "dev": "node esbuild.config.mjs --watch"
+    "watch": "node esbuild.config.mjs --watch",
+    "dev": "node scripts/dev.mjs",
+    "install:local": "node scripts/dev.mjs --once"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
