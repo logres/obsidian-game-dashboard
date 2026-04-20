@@ -1,0 +1,17 @@
+{
+  "name": "obsidian-game-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Folder-based game dashboard plugin for Obsidian.",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "esbuild": "^0.24.0",
+    "obsidian": "^1.8.10",
+    "tslib": "^2.7.0",
+    "typescript": "^5.6.2"
+  }
+}
