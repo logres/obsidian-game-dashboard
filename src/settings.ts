@@ -21,10 +21,8 @@ export class GameDashboardSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    new Setting(containerEl).setName("Game dashboard").setHeading();
-
     new Setting(containerEl)
-      .setName("Games root folder")
+      .setName("Games root")
       .setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain Game.md and an optional GameAssets folder.")
       .addText((text) =>
         text
@@ -60,11 +58,11 @@ export class GameDashboardSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Metadata import").setHeading();
 
     new Setting(containerEl)
-      .setName("Client ID")
+      .setName("Client id")
       .setDesc("Twitch application client ID used for metadata search and import.")
       .addText((text) =>
         text
-          .setPlaceholder("Your Twitch client ID")
+          .setPlaceholder("Your Twitch client id")
           .setValue(this.plugin.settings.igdbClientId)
           .onChange((value) => {
             this.plugin.settings.igdbClientId = value.trim();

@@ -280,7 +280,7 @@ export class GameDashboardView extends ItemView {
     });
 
     const right = toolbar.createDiv({ cls: "game-dashboard-toolbar-group" });
-    const refreshButton = right.createEl("button", { cls: "game-dashboard-button subtle", text: "Refresh" });
+    const refreshButton = right.createEl("button", { cls: "game-dashboard-button subtle", text: "Reload" });
     refreshButton.addEventListener("click", () => {
       void this.refresh();
     });

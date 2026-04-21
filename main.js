@@ -668,8 +668,7 @@ var GameDashboardSettingTab = class extends import_obsidian4.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian4.Setting(containerEl).setName("Game dashboard").setHeading();
-    new import_obsidian4.Setting(containerEl).setName("Games root folder").setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain Game.md and an optional GameAssets folder.").addText(
+    new import_obsidian4.Setting(containerEl).setName("Games root").setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain Game.md and an optional GameAssets folder.").addText(
       (text) => text.setPlaceholder("2-Knowledge/Media Library/Games").setValue(this.plugin.settings.gamesRoot).onChange((value) => {
         void this.updateGamesRoot(value);
       })
@@ -686,8 +685,8 @@ var GameDashboardSettingTab = class extends import_obsidian4.PluginSettingTab {
       })
     );
     new import_obsidian4.Setting(containerEl).setName("Metadata import").setHeading();
-    new import_obsidian4.Setting(containerEl).setName("Client ID").setDesc("Twitch application client ID used for metadata search and import.").addText(
-      (text) => text.setPlaceholder("Your Twitch client ID").setValue(this.plugin.settings.igdbClientId).onChange((value) => {
+    new import_obsidian4.Setting(containerEl).setName("Client id").setDesc("Twitch application client ID used for metadata search and import.").addText(
+      (text) => text.setPlaceholder("Your Twitch client id").setValue(this.plugin.settings.igdbClientId).onChange((value) => {
         this.plugin.settings.igdbClientId = value.trim();
         void this.plugin.saveSettings();
       })
@@ -1040,7 +1039,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
       this.renderContent();
     });
     const right = toolbar.createDiv({ cls: "game-dashboard-toolbar-group" });
-    const refreshButton = right.createEl("button", { cls: "game-dashboard-button subtle", text: "Refresh" });
+    const refreshButton = right.createEl("button", { cls: "game-dashboard-button subtle", text: "Reload" });
     refreshButton.addEventListener("click", () => {
       void this.refresh();
     });
@@ -1400,9 +1399,6 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
     this.registerEvent(this.app.vault.on("rename", () => this.requestRefreshAllViews()));
     this.registerEvent(this.app.metadataCache.on("changed", () => this.requestRefreshAllViews()));
   }
-  onunload() {
-    this.app.workspace.detachLeavesOfType(GAME_DASHBOARD_VIEW_TYPE);
-  }
   async loadSettings() {
     var _a;
     const loaded = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -1472,7 +1468,7 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
         active: true
       });
     }
-    workspace.revealLeaf(leaf);
+    void workspace.revealLeaf(leaf);
   }
   openCreateGameModal() {
     new CreateGameModal(this.app, this).open();

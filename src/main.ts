@@ -119,10 +119,6 @@ export default class GameDashboardPlugin extends Plugin {
     this.registerEvent(this.app.metadataCache.on("changed", () => this.requestRefreshAllViews()));
   }
 
-  onunload(): void {
-    this.app.workspace.detachLeavesOfType(GAME_DASHBOARD_VIEW_TYPE);
-  }
-
   async loadSettings(): Promise<void> {
     const loaded = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as GameDashboardSettings & {
       igdbClientSecret?: string;
@@ -209,7 +205,7 @@ export default class GameDashboardPlugin extends Plugin {
       });
     }
 
-    workspace.revealLeaf(leaf);
+    void workspace.revealLeaf(leaf);
   }
 
   openCreateGameModal(): void {
