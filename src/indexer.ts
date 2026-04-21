@@ -69,7 +69,7 @@ function resolveBannerFile(app: App, folder: TFolder, mainFile: TFile | null, po
   return images.find((file) => !posterFile || file.path !== posterFile.path) ?? posterFile ?? null;
 }
 
-export async function indexGames(app: App, settings: GameDashboardSettings): Promise<GameEntry[]> {
+export function indexGames(app: App, settings: GameDashboardSettings): GameEntry[] {
   const rootFolder = asFolder(app.vault.getAbstractFileByPath(settings.gamesRoot));
   if (!rootFolder) return [];
 

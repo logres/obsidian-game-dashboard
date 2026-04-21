@@ -27,11 +27,11 @@ var import_obsidian7 = require("obsidian");
 // src/createGameModal.ts
 var import_obsidian = require("obsidian");
 var STATUSES = [
-  { value: "active", label: "\u8FDB\u884C\u4E2D" },
-  { value: "backlog", label: "\u5F85\u5F00\u59CB" },
-  { value: "paused", label: "\u6682\u505C" },
-  { value: "completed", label: "\u5DF2\u5B8C\u6210" },
-  { value: "archived", label: "\u5DF2\u5F52\u6863" }
+  { value: "active", label: "Active" },
+  { value: "backlog", label: "Backlog" },
+  { value: "paused", label: "Paused" },
+  { value: "completed", label: "Completed" },
+  { value: "archived", label: "Archived" }
 ];
 function emptyInput() {
   return {
@@ -84,30 +84,30 @@ var CreateGameModal = class extends import_obsidian.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("game-dashboard-create-modal");
-    contentEl.createEl("h2", { text: "Create Game Entry" });
+    contentEl.createEl("h2", { text: "Create game entry" });
     const searchSection = contentEl.createDiv({ cls: "game-dashboard-import-search" });
     const searchHeader = searchSection.createDiv({ cls: "game-dashboard-import-search-row" });
     this.searchInputEl = searchHeader.createEl("input", {
       type: "text",
-      placeholder: "Search IGDB, e.g. Disco Elysium"
+      placeholder: "Search metadata, e.g. Disco Elysium"
     });
     this.focusPrimaryInput();
     this.searchInputEl.addEventListener("input", () => {
       if (!this.searchInputEl) return;
       this.searchQuery = this.searchInputEl.value.trim();
     });
-    const searchButton = searchHeader.createEl("button", { text: "Search IGDB" });
-    searchButton.addEventListener("click", async () => {
-      await this.runSearch();
+    const searchButton = searchHeader.createEl("button", { text: "Search metadata" });
+    searchButton.addEventListener("click", () => {
+      void this.runSearch();
     });
-    this.searchInputEl.addEventListener("keydown", async (event) => {
+    this.searchInputEl.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
-      await this.runSearch();
+      void this.runSearch();
     });
     searchSection.createDiv({
       cls: "setting-item-description",
-      text: "\u914D\u7F6E\u597D IGDB Client ID / Client Secret \u540E\uFF0C\u8FD9\u91CC\u4F1A\u4ECE IGDB \u641C\u7D22\u5E76\u5BFC\u5165\u8BE6\u7EC6\u4FE1\u606F\u3002"
+      text: "Configure an IGDB client ID and client secret to search and import detailed metadata."
     });
     this.resultsEl = searchSection.createDiv({ cls: "game-dashboard-import-results" });
     this.formEl = contentEl.createDiv({ cls: "game-dashboard-modal-form" });
@@ -127,11 +127,11 @@ var CreateGameModal = class extends import_obsidian.Modal {
     try {
       this.searchResults = await this.plugin.searchExternalGames(this.searchQuery);
       if (this.searchResults.length === 0) {
-        new import_obsidian.Notice("No IGDB results found.");
+        new import_obsidian.Notice("No results found.");
       }
     } catch (error) {
       console.error(error);
-      new import_obsidian.Notice(error instanceof Error ? error.message : "IGDB search failed.");
+      new import_obsidian.Notice(error instanceof Error ? error.message : "Metadata search failed.");
       this.searchResults = [];
     } finally {
       this.isSearching = false;
@@ -146,7 +146,7 @@ var CreateGameModal = class extends import_obsidian.Modal {
       return;
     }
     if (this.searchResults.length === 0) {
-      this.resultsEl.createDiv({ cls: "game-dashboard-import-empty", text: "No result yet. Search Steam / IGDB above." });
+      this.resultsEl.createDiv({ cls: "game-dashboard-import-empty", text: "No result yet. Search metadata above." });
       return;
     }
     this.searchResults.forEach((candidate) => {
@@ -183,17 +183,23 @@ var CreateGameModal = class extends import_obsidian.Modal {
         action.disabled = true;
         action.textContent = "Loading...";
       }
-      action.addEventListener("click", async () => {
-        if (this.isApplying) return;
-        this.isApplying = true;
-        this.selectedCandidateId = candidate.id;
-        this.renderResults();
-        const enriched = await this.plugin.enrichImportedCandidate(candidate);
-        this.applyCandidate(enriched);
-        this.isApplying = false;
-        this.renderResults();
+      action.addEventListener("click", () => {
+        void this.applySearchResult(candidate);
       });
     });
+  }
+  async applySearchResult(candidate) {
+    if (this.isApplying) return;
+    this.isApplying = true;
+    this.selectedCandidateId = candidate.id;
+    this.renderResults();
+    try {
+      const enriched = await this.plugin.enrichImportedCandidate(candidate);
+      this.applyCandidate(enriched);
+    } finally {
+      this.isApplying = false;
+      this.renderResults();
+    }
   }
   renderForm() {
     if (!this.formEl) return;
@@ -242,20 +248,23 @@ var CreateGameModal = class extends import_obsidian.Modal {
         this.close();
       })
     ).addButton(
-      (button) => button.setButtonText("Create").setCta().onClick(async () => {
-        if (!this.values.title) {
-          new import_obsidian.Notice("Game title is required.");
-          return;
-        }
-        try {
-          await this.plugin.createGame(this.values);
-          this.close();
-        } catch (error) {
-          console.error(error);
-          new import_obsidian.Notice(error instanceof Error ? error.message : "Failed to create game entry.");
-        }
+      (button) => button.setButtonText("Create").setCta().onClick(() => {
+        void this.submit();
       })
     );
+  }
+  async submit() {
+    if (!this.values.title) {
+      new import_obsidian.Notice("Game title is required.");
+      return;
+    }
+    try {
+      await this.plugin.createGame(this.values);
+      this.close();
+    } catch (error) {
+      console.error(error);
+      new import_obsidian.Notice(error instanceof Error ? error.message : "Failed to create game entry.");
+    }
   }
   applyCandidate(candidate) {
     this.values = {
@@ -291,7 +300,7 @@ var CreateGameModal = class extends import_obsidian.Modal {
     this.addReadOnly(this.readOnlyGridEl, "Developer", this.values.developer || "Auto");
     this.addReadOnly(this.readOnlyGridEl, "Publisher", this.values.publisher || "Auto");
     this.addReadOnly(this.readOnlyGridEl, "Platform", this.values.platform || "Auto");
-    this.addReadOnly(this.readOnlyGridEl, "Release Date", this.values.releaseDate || "Auto");
+    this.addReadOnly(this.readOnlyGridEl, "Release date", this.values.releaseDate || "Auto");
     this.addReadOnly(this.readOnlyGridEl, "Year", this.values.year || "Auto");
     this.progressInputEl = this.addInput(this.readOnlyGridEl, "Progress", progressValue, (value) => this.values.progress = value);
     this.addReadOnly(this.readOnlyGridEl, "Rating", this.values.rating || "Auto");
@@ -312,12 +321,12 @@ var CreateGameModal = class extends import_obsidian.Modal {
     this.importedEl.empty();
     this.importedEl.createDiv({
       cls: "game-dashboard-imported-meta-title",
-      text: "Imported Metadata"
+      text: "Imported metadata"
     });
     if (this.selectedCandidateId !== null) {
       this.importedEl.createDiv({
         cls: "game-dashboard-imported-meta-source",
-        text: `Primary Source: ${((_a = this.searchResults.find((item) => item.id === this.selectedCandidateId)) == null ? void 0 : _a.source) === "steam" ? "Steam" : "IGDB"}`
+        text: `Primary source: ${((_a = this.searchResults.find((item) => item.id === this.selectedCandidateId)) == null ? void 0 : _a.source) === "steam" ? "Steam" : "IGDB"}`
       });
     }
     [
@@ -484,7 +493,7 @@ var IgdbClient = class {
     var _a;
     const clientSecret = this.plugin.getIgdbClientSecret();
     if (!this.plugin.settings.igdbClientId || !clientSecret) {
-      throw new Error("IGDB Client ID / Client Secret \u672A\u914D\u7F6E\u3002");
+      throw new Error("IGDB client ID / client secret is not configured.");
     }
     if (this.tokenCache && this.tokenCache.expiresAt > Date.now() + 6e4) {
       return this.tokenCache.accessToken;
@@ -495,7 +504,7 @@ var IgdbClient = class {
     });
     const json = response.json;
     if (!(json == null ? void 0 : json.access_token)) {
-      new import_obsidian2.Notice("IGDB token request failed.");
+      new import_obsidian2.Notice("Metadata token request failed.");
       throw new Error("Unable to fetch IGDB access token.");
     }
     this.tokenCache = {
@@ -600,7 +609,7 @@ function resolveBannerFile(app, folder, mainFile, posterFile) {
   const images = collectImageFiles(folder);
   return (_b = (_a = images.find((file) => !posterFile || file.path !== posterFile.path)) != null ? _a : posterFile) != null ? _b : null;
 }
-async function indexGames(app, settings) {
+function indexGames(app, settings) {
   const rootFolder = asFolder(app.vault.getAbstractFileByPath(settings.gamesRoot));
   if (!rootFolder) return [];
   const gameFolders = rootFolder.children.filter((child) => child instanceof import_obsidian3.TFolder);
@@ -659,45 +668,51 @@ var GameDashboardSettingTab = class extends import_obsidian4.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Game Dashboard" });
+    new import_obsidian4.Setting(containerEl).setName("Game dashboard").setHeading();
     new import_obsidian4.Setting(containerEl).setName("Games root folder").setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain Game.md and an optional GameAssets folder.").addText(
-      (text) => text.setPlaceholder("2-Knowledge/Media Library/Games").setValue(this.plugin.settings.gamesRoot).onChange(async (value) => {
-        this.plugin.settings.gamesRoot = value.trim();
-        await this.plugin.saveSettings();
-        await this.plugin.refreshAllViews();
+      (text) => text.setPlaceholder("2-Knowledge/Media Library/Games").setValue(this.plugin.settings.gamesRoot).onChange((value) => {
+        void this.updateGamesRoot(value);
       })
     );
     new import_obsidian4.Setting(containerEl).setName("Main note name").setDesc("The main details note created inside each game folder.").addText(
-      (text) => text.setPlaceholder("Game.md").setValue(this.plugin.settings.mainNoteName).onChange(async (value) => {
-        const nextValue = value.trim() || DEFAULT_SETTINGS.mainNoteName;
-        this.plugin.settings.mainNoteName = nextValue.endsWith(".md") ? nextValue : `${nextValue}.md`;
-        await this.plugin.saveSettings();
-        await this.plugin.refreshAllViews();
+      (text) => text.setPlaceholder("Game.md").setValue(this.plugin.settings.mainNoteName).onChange((value) => {
+        void this.updateMainNoteName(value);
       })
     );
     new import_obsidian4.Setting(containerEl).setName("Open note after create").setDesc("Open the newly created main note after the creation modal completes.").addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.openNoteAfterCreate).onChange(async (value) => {
+      (toggle) => toggle.setValue(this.plugin.settings.openNoteAfterCreate).onChange((value) => {
         this.plugin.settings.openNoteAfterCreate = value;
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    containerEl.createEl("h3", { text: "IGDB Import" });
-    new import_obsidian4.Setting(containerEl).setName("IGDB Client ID").setDesc("Twitch application Client ID used for IGDB search and import.").addText(
-      (text) => text.setPlaceholder("Your Twitch Client ID").setValue(this.plugin.settings.igdbClientId).onChange(async (value) => {
+    new import_obsidian4.Setting(containerEl).setName("Metadata import").setHeading();
+    new import_obsidian4.Setting(containerEl).setName("Client ID").setDesc("Twitch application client ID used for metadata search and import.").addText(
+      (text) => text.setPlaceholder("Your Twitch client ID").setValue(this.plugin.settings.igdbClientId).onChange((value) => {
         this.plugin.settings.igdbClientId = value.trim();
-        await this.plugin.saveSettings();
+        void this.plugin.saveSettings();
       })
     );
-    const secretSetting = new import_obsidian4.Setting(containerEl).setName("IGDB Client Secret").setDesc("Stored with Obsidian SecretStorage and used only to request IGDB access tokens.");
+    const secretSetting = new import_obsidian4.Setting(containerEl).setName("Client secret").setDesc("Stored with Obsidian SecretStorage and used only to request metadata access tokens.");
     secretSetting.controlEl.empty();
-    new import_obsidian4.SecretComponent(this.app, secretSetting.controlEl).setValue(this.plugin.getIgdbClientSecret()).onChange(async (value) => {
-      await this.plugin.setIgdbClientSecret(value.trim());
+    new import_obsidian4.SecretComponent(this.app, secretSetting.controlEl).setValue(this.plugin.getIgdbClientSecret()).onChange((value) => {
+      this.plugin.setIgdbClientSecret(value.trim());
     });
-    new import_obsidian4.Setting(containerEl).setName("Open dashboard").setDesc("Open or reveal the Game Dashboard view.").addButton(
-      (button) => button.setButtonText("Open").onClick(async () => {
-        await this.plugin.activateView();
+    new import_obsidian4.Setting(containerEl).setName("Open dashboard").setDesc("Open or reveal the game dashboard view.").addButton(
+      (button) => button.setButtonText("Open").onClick(() => {
+        void this.plugin.activateView();
       })
     );
+  }
+  async updateGamesRoot(value) {
+    this.plugin.settings.gamesRoot = value.trim();
+    await this.plugin.saveSettings();
+    await this.plugin.refreshAllViews();
+  }
+  async updateMainNoteName(value) {
+    const nextValue = value.trim() || DEFAULT_SETTINGS.mainNoteName;
+    this.plugin.settings.mainNoteName = nextValue.endsWith(".md") ? nextValue : `${nextValue}.md`;
+    await this.plugin.saveSettings();
+    await this.plugin.refreshAllViews();
   }
 };
 
@@ -792,25 +807,25 @@ var SteamClient = class {
 var import_obsidian6 = require("obsidian");
 var GAME_DASHBOARD_VIEW_TYPE = "game-dashboard-view";
 var STATUS_LABELS = {
-  active: "\u8FDB\u884C\u4E2D",
-  backlog: "\u5F85\u5F00\u59CB",
-  paused: "\u6682\u505C",
-  completed: "\u5DF2\u5B8C\u6210",
-  archived: "\u5DF2\u5F52\u6863",
-  unsorted: "\u672A\u6574\u7406"
+  active: "Active",
+  backlog: "Backlog",
+  paused: "Paused",
+  completed: "Completed",
+  archived: "Archived",
+  unsorted: "Unsorted"
 };
 var SECTIONS = [
   {
     key: "playing",
-    title: "\u6B63\u5728\u6E38\u73A9",
-    subtitle: "\u8FDB\u884C\u4E2D / \u6682\u505C\u4E2D\u7684\u6E38\u620F",
+    title: "Playing",
+    subtitle: "Active or paused games",
     collapsedByDefault: false,
     match: (entry) => entry.status === "active" || entry.status === "paused"
   },
   {
     key: "all",
-    title: "\u6240\u6709\u6E38\u620F",
-    subtitle: "\u5B8C\u6574\u6E38\u620F\u5E93",
+    title: "All games",
+    subtitle: "Full game library",
     collapsedByDefault: false,
     match: (_entry) => true
   }
@@ -835,19 +850,19 @@ var DeleteGameConfirmModal = class extends import_obsidian6.Modal {
     }
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("h3", { text: "\u5220\u9664\u6E38\u620F" });
+    contentEl.createEl("h3", { text: "Delete game" });
     contentEl.createEl("p", {
-      text: `\u5C06\u5220\u9664\u201C${this.entry.title}\u201D\u5BF9\u5E94\u7684\u6574\u4E2A\u6E38\u620F\u6587\u4EF6\u5939\u3002\u8FD9\u4E2A\u64CD\u4F5C\u4F1A\u5220\u9664 Game.md\u3001\u5173\u8054\u7B14\u8BB0\u548C GameAssets\u3002`
+      text: `This will delete the entire game folder for "${this.entry.title}", including Game.md, related notes, and GameAssets.`
     });
     new import_obsidian6.Setting(contentEl).addButton(
-      (button) => button.setButtonText("\u53D6\u6D88").onClick(() => {
+      (button) => button.setButtonText("Cancel").onClick(() => {
         this.close();
       })
     ).addButton(
-      (button) => button.setButtonText("\u5220\u9664").setWarning().onClick(async () => {
+      (button) => button.setButtonText("Delete").setWarning().onClick(() => {
         this.close();
         window.setTimeout(() => {
-          void this.onConfirm();
+          this.onConfirm();
           window.setTimeout(() => window.focus(), 0);
         }, 0);
       })
@@ -884,7 +899,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     return GAME_DASHBOARD_VIEW_TYPE;
   }
   getDisplayText() {
-    return "Game Dashboard";
+    return "Game dashboard";
   }
   getIcon() {
     return "gamepad-2";
@@ -894,7 +909,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     this.ensureFloatingTooltip();
     await this.refresh();
   }
-  async onClose() {
+  onClose() {
     var _a;
     (_a = this.floatingTooltipEl) == null ? void 0 : _a.remove();
     this.floatingTooltipEl = null;
@@ -977,19 +992,19 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
   renderHero(container, entries) {
     const hero = container.createDiv({ cls: "game-dashboard-hero" });
     const heading = hero.createDiv({ cls: "game-dashboard-hero-copy" });
-    heading.createDiv({ cls: "game-dashboard-kicker", text: "Game Library" });
-    heading.createEl("h2", { cls: "game-dashboard-hero-title", text: "Steam \u98CE\u683C\u6D4F\u89C8\u4F60\u7684\u6E38\u620F\u5E93" });
+    heading.createDiv({ cls: "game-dashboard-kicker", text: "Game library" });
+    heading.createEl("h2", { cls: "game-dashboard-hero-title", text: "Browse your game library" });
     heading.createDiv({
       cls: "game-dashboard-hero-text",
-      text: "\u70B9\u51FB\u5C01\u9762\u5207\u6362\u8BE6\u60C5\uFF0C\u53CC\u51FB\u5C01\u9762\u6253\u5F00\u4E3B\u7B14\u8BB0\u3002\u6BCF\u4E2A\u6E38\u620F\u6587\u4EF6\u5939\u5305\u542B\u4E00\u4E2A\u4E3B\u6587\u6863\u548C\u82E5\u5E72\u5173\u8054\u7B14\u8BB0\u3002"
+      text: "Select a cover to view details. Double-click a cover to open the main note. Each game folder contains one main note and related notes."
     });
     const stats = hero.createDiv({ cls: "game-dashboard-stats" });
     const playingCount = entries.filter((entry) => entry.status === "active" || entry.status === "paused").length;
     const completedCount = entries.filter((entry) => entry.status === "completed").length;
     [
-      ["\u{1F3AE} \u6240\u6709\u6E38\u620F", String(entries.length)],
-      ["\u{1F579} \u6B63\u5728\u6E38\u73A9", String(playingCount)],
-      ["\u{1F3C1} \u5DF2\u5B8C\u6210", String(completedCount)]
+      ["\u{1F3AE} All games", String(entries.length)],
+      ["\u{1F579} Playing", String(playingCount)],
+      ["\u{1F3C1} Completed", String(completedCount)]
     ].forEach(([label, value]) => {
       const stat = stats.createDiv({ cls: "game-dashboard-stat" });
       stat.createDiv({ cls: "game-dashboard-stat-label", text: label });
@@ -1007,7 +1022,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     const search = left.createEl("input", {
       cls: "game-dashboard-input",
       type: "text",
-      placeholder: "\u641C\u7D22\u6E38\u620F\u3001\u5E73\u53F0\u3001\u5F00\u53D1\u5546"
+      placeholder: "Search games, platforms, or developers"
     });
     search.value = this.query;
     search.addEventListener("input", () => {
@@ -1016,8 +1031,8 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     });
     const sort = left.createEl("select", { cls: "game-dashboard-select" });
     [
-      ["updated", "\u6700\u8FD1\u66F4\u65B0"],
-      ["name", "\u6309\u6807\u9898"]
+      ["updated", "Recently updated"],
+      ["name", "Title"]
     ].forEach(([value, label]) => sort.createEl("option", { value, text: label }));
     sort.value = this.sortMode;
     sort.addEventListener("change", () => {
@@ -1026,10 +1041,10 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     });
     const right = toolbar.createDiv({ cls: "game-dashboard-toolbar-group" });
     const refreshButton = right.createEl("button", { cls: "game-dashboard-button subtle", text: "Refresh" });
-    refreshButton.addEventListener("click", async () => {
-      await this.refresh();
+    refreshButton.addEventListener("click", () => {
+      void this.refresh();
     });
-    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ New Game" });
+    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ New game" });
     createButton.addEventListener("click", () => this.plugin.openCreateGameModal());
   }
   renderFilterBar(entries) {
@@ -1043,13 +1058,13 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
       counts.set(entry.status, ((_a = counts.get(entry.status)) != null ? _a : 0) + 1);
     }
     [
-      ["all", "\u5168\u90E8"],
-      ["active", "\u8FDB\u884C\u4E2D"],
-      ["backlog", "\u5F85\u5F00\u59CB"],
-      ["paused", "\u6682\u505C"],
-      ["completed", "\u5DF2\u5B8C\u6210"],
-      ["archived", "\u5DF2\u5F52\u6863"],
-      ["unsorted", "\u672A\u6574\u7406"]
+      ["all", "All"],
+      ["active", "Active"],
+      ["backlog", "Backlog"],
+      ["paused", "Paused"],
+      ["completed", "Completed"],
+      ["archived", "Archived"],
+      ["unsorted", "Unsorted"]
     ].forEach(([value, label]) => {
       var _a2;
       const button = bar.createEl("button", {
@@ -1066,7 +1081,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
   renderDetail(container, entry) {
     const panel = container.createDiv({ cls: "game-dashboard-detail-panel" });
     if (!entry) {
-      panel.createDiv({ cls: "game-dashboard-empty game-dashboard-detail-empty", text: "\u5F53\u524D\u6CA1\u6709\u53EF\u5C55\u793A\u7684\u6E38\u620F\u6761\u76EE\u3002" });
+      panel.createDiv({ cls: "game-dashboard-empty game-dashboard-detail-empty", text: "No game entries to show." });
       return;
     }
     const card = panel.createDiv({ cls: "game-dashboard-detail-card" });
@@ -1096,7 +1111,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
       entry.platform,
       entry.year,
       entry.progress,
-      entry.rating && `\u8BC4\u5206 ${entry.rating}`
+      entry.rating && `Rating ${entry.rating}`
     ].filter(Boolean).join(" \xB7 ");
     if (meta) body.createDiv({ cls: "game-dashboard-detail-meta", text: meta });
     const facts = body.createDiv({ cls: "game-dashboard-detail-facts" });
@@ -1110,27 +1125,27 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     if (facts.childElementCount === 0) facts.remove();
     const summary = body.createEl("p", {
       cls: "game-dashboard-detail-summary",
-      text: entry.summary || "\u6682\u65E0\u6458\u8981\u3002\u540E\u7EED\u53EF\u4EE5\u901A\u8FC7\u4E3B\u6587\u6863 frontmatter \u6216\u6B63\u6587\u540C\u6B65\u8865\u5168\u3002"
+      text: entry.summary || "No summary yet. Add one in the main note frontmatter or body."
     });
     summary.setAttribute("dir", "auto");
     const actions = body.createDiv({ cls: "game-dashboard-action-row" });
-    actions.appendChild(this.createFileLink("\u6253\u5F00\u4E3B\u7B14\u8BB0", entry.mainFile, "game-dashboard-button primary"));
-    if (entry.officialUrl) actions.appendChild(this.createExternalLink("\u5B98\u65B9\u94FE\u63A5", entry.officialUrl, "game-dashboard-button"));
-    if (entry.detailUrl) actions.appendChild(this.createExternalLink("\u8BE6\u60C5\u9875", entry.detailUrl, "game-dashboard-button"));
-    const deleteButton = actions.createEl("button", { cls: "game-dashboard-button danger", text: "\u5220\u9664\u6E38\u620F" });
-    deleteButton.addEventListener("click", async () => {
-      new DeleteGameConfirmModal(this.app, entry, async () => {
+    actions.appendChild(this.createFileLink("Open main note", entry.mainFile, "game-dashboard-button primary"));
+    if (entry.officialUrl) actions.appendChild(this.createExternalLink("Official link", entry.officialUrl, "game-dashboard-button"));
+    if (entry.detailUrl) actions.appendChild(this.createExternalLink("Details page", entry.detailUrl, "game-dashboard-button"));
+    const deleteButton = actions.createEl("button", { cls: "game-dashboard-button danger", text: "Delete game" });
+    deleteButton.addEventListener("click", () => {
+      new DeleteGameConfirmModal(this.app, entry, () => {
         this.hideTooltip();
         if (this.selectedPath === entry.folder.path) this.selectedPath = null;
-        await this.plugin.deleteGame(entry);
+        void this.plugin.deleteGame(entry);
       }).open();
     });
     const side = content.createDiv({ cls: "game-dashboard-detail-side" });
     const related = side.createDiv({ cls: "game-dashboard-related" });
-    related.createEl("h4", { cls: "game-dashboard-side-title", text: "\u5173\u8054\u7B14\u8BB0" });
+    related.createEl("h4", { cls: "game-dashboard-side-title", text: "Related notes" });
     const notes = related.createDiv({ cls: "game-dashboard-note-list" });
     if (entry.notes.length === 0) {
-      notes.createDiv({ cls: "game-dashboard-empty-inline", text: "\u8FD8\u6CA1\u6709\u5173\u8054\u7B14\u8BB0\u3002" });
+      notes.createDiv({ cls: "game-dashboard-empty-inline", text: "No related notes yet." });
     } else {
       entry.notes.forEach((file) => {
         notes.appendChild(this.createFileLink(file.basename, file, "game-dashboard-note-chip"));
@@ -1154,18 +1169,18 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
       });
       const toggle = header.createEl("button", {
         cls: "game-dashboard-toggle",
-        text: collapsed ? "\u5C55\u5F00" : "\u6536\u8D77"
+        text: collapsed ? "Expand" : "Collapse"
       });
       toggle.addEventListener("click", () => {
         this.collapsedSections[section.key] = !this.collapsedSections[section.key];
         wrapper.toggleClass("is-collapsed", this.collapsedSections[section.key]);
         wrapper.toggleClass("is-expanded", !this.collapsedSections[section.key]);
-        toggle.setText(this.collapsedSections[section.key] ? "\u5C55\u5F00" : "\u6536\u8D77");
+        toggle.setText(this.collapsedSections[section.key] ? "Expand" : "Collapse");
       });
       const body = wrapper.createDiv({ cls: "game-dashboard-section-body" });
       const grid = body.createDiv({ cls: "game-dashboard-grid" });
       if (items.length === 0) {
-        grid.createDiv({ cls: "game-dashboard-empty", text: "\u5F53\u524D\u5206\u7EC4\u6CA1\u6709\u5339\u914D\u6761\u76EE\u3002" });
+        grid.createDiv({ cls: "game-dashboard-empty", text: "No matching entries in this section." });
       } else {
         items.forEach((entry) => grid.appendChild(this.buildCard(entry)));
       }
@@ -1176,20 +1191,20 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     endcap.createDiv({ cls: "game-dashboard-endcap-line" });
     endcap.createDiv({
       cls: "game-dashboard-endcap-text",
-      text: count > 0 ? `End of Library \xB7 ${count} visible` : "End of Library"
+      text: count > 0 ? `End of library \xB7 ${count} visible` : "End of library"
     });
   }
   buildCard(entry) {
     const card = createNode("button", { cls: "game-dashboard-card" });
     if (entry.folder.path === this.selectedPath) card.addClass("is-selected");
-    card.addEventListener("click", async () => {
+    card.addEventListener("click", () => {
       this.selectedPath = entry.folder.path;
       this.hideTooltip();
       this.preserveScroll(() => this.renderContent());
     });
-    card.addEventListener("dblclick", async () => {
+    card.addEventListener("dblclick", () => {
       this.hideTooltip();
-      if (entry.mainFile) await this.app.workspace.getLeaf("tab").openFile(entry.mainFile);
+      if (entry.mainFile) void this.app.workspace.getLeaf("tab").openFile(entry.mainFile);
     });
     card.addEventListener("mouseenter", () => this.showTooltip(card, entry));
     card.addEventListener("mouseleave", () => this.hideTooltip());
@@ -1214,7 +1229,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
       cls: compact ? "game-dashboard-poster-overlay compact" : "game-dashboard-poster-overlay"
     });
     const meta = overlay.createDiv({ cls: "game-dashboard-poster-meta" });
-    meta.createDiv({ cls: "game-dashboard-poster-kind", text: "\u6E38\u620F" });
+    meta.createDiv({ cls: "game-dashboard-poster-kind", text: "Game" });
     meta.appendChild(this.createStatusPill(entry.status));
     overlay.createDiv({ cls: "game-dashboard-poster-title", text: entry.title });
     const sub = [entry.developer, entry.platform, entry.progress].filter(Boolean).join(" \xB7 ");
@@ -1232,9 +1247,9 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     const link = createNode(file ? "a" : "span", { text: label, cls: className });
     if (!file) return link;
     link.href = file.path;
-    link.addEventListener("click", async (event) => {
+    link.addEventListener("click", (event) => {
       event.preventDefault();
-      await this.app.workspace.getLeaf("tab").openFile(file);
+      void this.app.workspace.getLeaf("tab").openFile(file);
     });
     return link;
   }
@@ -1249,7 +1264,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     if (!this.floatingTooltipEl) return;
     this.floatingTooltipEl.empty();
     const card = this.floatingTooltipEl.createDiv({ cls: "game-dashboard-tooltip-card" });
-    const title = card.createDiv({ cls: "game-dashboard-tooltip-title", text: entry.title });
+    card.createDiv({ cls: "game-dashboard-tooltip-title", text: entry.title });
     const preview = card.createDiv({ cls: "game-dashboard-tooltip-preview" });
     if (entry.posterFile) {
       preview.createEl("img", {
@@ -1268,15 +1283,19 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     const placeRight = window.innerWidth - rect.right >= tooltipWidth + gap || rect.left < tooltipWidth;
     const left = placeRight ? Math.min(rect.right + gap, window.innerWidth - tooltipWidth - 12) : Math.max(12, rect.left - tooltipWidth - gap);
     const top = Math.max(12, Math.min(rect.top + rect.height / 2 - tooltipHeight / 2, window.innerHeight - tooltipHeight - 12));
-    this.floatingTooltipEl.style.left = `${left}px`;
-    this.floatingTooltipEl.style.top = `${top}px`;
+    this.floatingTooltipEl.setCssProps({
+      "--game-dashboard-tooltip-left": `${left}px`,
+      "--game-dashboard-tooltip-top": `${top}px`
+    });
     this.floatingTooltipEl.classList.add("is-visible");
   }
   hideTooltip() {
     if (!this.floatingTooltipEl) return;
     this.floatingTooltipEl.classList.remove("is-visible");
-    this.floatingTooltipEl.style.left = "-9999px";
-    this.floatingTooltipEl.style.top = "-9999px";
+    this.floatingTooltipEl.setCssProps({
+      "--game-dashboard-tooltip-left": "-9999px",
+      "--game-dashboard-tooltip-top": "-9999px"
+    });
   }
   filterEntries(entries) {
     const query = this.query.toLowerCase();
@@ -1359,14 +1378,14 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
       GAME_DASHBOARD_VIEW_TYPE,
       (leaf) => new GameDashboardView(leaf, this)
     );
-    this.addRibbonIcon("gamepad-2", "Open Game Dashboard", async () => {
-      await this.activateView();
+    this.addRibbonIcon("gamepad-2", "Open dashboard", () => {
+      void this.activateView();
     });
     this.addCommand({
-      id: "open-game-dashboard",
-      name: "Open Game Dashboard",
-      callback: async () => {
-        await this.activateView();
+      id: "open-dashboard",
+      name: "Open dashboard",
+      callback: () => {
+        void this.activateView();
       }
     });
     this.addCommand({
@@ -1376,13 +1395,13 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
         this.openCreateGameModal();
       }
     });
-    this.registerEvent(this.app.vault.on("create", async () => this.requestRefreshAllViews()));
-    this.registerEvent(this.app.vault.on("delete", async () => this.requestRefreshAllViews()));
-    this.registerEvent(this.app.vault.on("rename", async () => this.requestRefreshAllViews()));
-    this.registerEvent(this.app.metadataCache.on("changed", async () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.vault.on("create", () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.vault.on("delete", () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.vault.on("rename", () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.metadataCache.on("changed", () => this.requestRefreshAllViews()));
   }
-  async onunload() {
-    await this.app.workspace.detachLeavesOfType(GAME_DASHBOARD_VIEW_TYPE);
+  onunload() {
+    this.app.workspace.detachLeavesOfType(GAME_DASHBOARD_VIEW_TYPE);
   }
   async loadSettings() {
     var _a;
@@ -1402,7 +1421,7 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
     var _a;
     return (_a = this.app.secretStorage.getSecret(_GameDashboardPlugin.IGDB_CLIENT_SECRET_KEY)) != null ? _a : "";
   }
-  async setIgdbClientSecret(value) {
+  setIgdbClientSecret(value) {
     this.app.secretStorage.setSecret(_GameDashboardPlugin.IGDB_CLIENT_SECRET_KEY, value);
   }
   beginModalSession() {
@@ -1412,11 +1431,11 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
     this.refreshSuppressedCount = Math.max(0, this.refreshSuppressedCount - 1);
     if (this.refreshSuppressedCount === 0 && this.pendingRefreshWhileSuppressed) {
       this.pendingRefreshWhileSuppressed = false;
-      void this.requestRefreshAllViews();
+      this.requestRefreshAllViews();
     }
   }
-  async getGames() {
-    return await indexGames(this.app, this.settings);
+  getGames() {
+    return Promise.resolve(indexGames(this.app, this.settings));
   }
   async refreshAllViews() {
     const leaves = this.app.workspace.getLeavesOfType(GAME_DASHBOARD_VIEW_TYPE);
@@ -1429,7 +1448,7 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
       })
     );
   }
-  async requestRefreshAllViews() {
+  requestRefreshAllViews() {
     if (this.refreshSuppressedCount > 0) {
       this.pendingRefreshWhileSuppressed = true;
       return;
@@ -1508,12 +1527,12 @@ var _GameDashboardPlugin = class _GameDashboardPlugin extends import_obsidian7.P
       await this.app.workspace.getLeaf("tab").openFile(file);
     }
     await this.activateView();
-    await this.requestRefreshAllViews();
+    this.requestRefreshAllViews();
     new import_obsidian7.Notice(`Created ${title}`);
   }
   async deleteGame(entry) {
-    await this.app.vault.trash(entry.folder, false);
-    await this.requestRefreshAllViews();
+    await this.app.fileManager.trashFile(entry.folder);
+    this.requestRefreshAllViews();
     new import_obsidian7.Notice(`Deleted ${entry.title}`);
   }
   async findBestComplement(title, source) {

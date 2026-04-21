@@ -666,8 +666,8 @@
 
 .game-dashboard-floating-tooltip {
   position: fixed;
-  left: -9999px;
-  top: -9999px;
+  left: var(--game-dashboard-tooltip-left, -9999px);
+  top: var(--game-dashboard-tooltip-top, -9999px);
   width: 360px;
   height: 240px;
   border-radius: var(--steam-radius-lg);

@@ -21,7 +21,7 @@ export class GameDashboardSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Game Dashboard" });
+    new Setting(containerEl).setName("Game dashboard").setHeading();
 
     new Setting(containerEl)
       .setName("Games root folder")
@@ -30,10 +30,8 @@ export class GameDashboardSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("2-Knowledge/Media Library/Games")
           .setValue(this.plugin.settings.gamesRoot)
-          .onChange(async (value) => {
-            this.plugin.settings.gamesRoot = value.trim();
-            await this.plugin.saveSettings();
-            await this.plugin.refreshAllViews();
+          .onChange((value) => {
+            void this.updateGamesRoot(value);
           })
       );
 
@@ -44,11 +42,8 @@ export class GameDashboardSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Game.md")
           .setValue(this.plugin.settings.mainNoteName)
-          .onChange(async (value) => {
-            const nextValue = value.trim() || DEFAULT_SETTINGS.mainNoteName;
-            this.plugin.settings.mainNoteName = nextValue.endsWith(".md") ? nextValue : `${nextValue}.md`;
-            await this.plugin.saveSettings();
-            await this.plugin.refreshAllViews();
+          .onChange((value) => {
+            void this.updateMainNoteName(value);
           })
       );
 
@@ -56,45 +51,58 @@ export class GameDashboardSettingTab extends PluginSettingTab {
       .setName("Open note after create")
       .setDesc("Open the newly created main note after the creation modal completes.")
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.openNoteAfterCreate).onChange(async (value) => {
+        toggle.setValue(this.plugin.settings.openNoteAfterCreate).onChange((value) => {
           this.plugin.settings.openNoteAfterCreate = value;
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         })
       );
 
-    containerEl.createEl("h3", { text: "IGDB Import" });
+    new Setting(containerEl).setName("Metadata import").setHeading();
 
     new Setting(containerEl)
-      .setName("IGDB Client ID")
-      .setDesc("Twitch application Client ID used for IGDB search and import.")
+      .setName("Client ID")
+      .setDesc("Twitch application client ID used for metadata search and import.")
       .addText((text) =>
         text
-          .setPlaceholder("Your Twitch Client ID")
+          .setPlaceholder("Your Twitch client ID")
           .setValue(this.plugin.settings.igdbClientId)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.igdbClientId = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
     const secretSetting = new Setting(containerEl)
-      .setName("IGDB Client Secret")
-      .setDesc("Stored with Obsidian SecretStorage and used only to request IGDB access tokens.");
+      .setName("Client secret")
+      .setDesc("Stored with Obsidian SecretStorage and used only to request metadata access tokens.");
 
     secretSetting.controlEl.empty();
     new SecretComponent(this.app, secretSetting.controlEl)
       .setValue(this.plugin.getIgdbClientSecret())
-      .onChange(async (value) => {
-        await this.plugin.setIgdbClientSecret(value.trim());
+      .onChange((value) => {
+        this.plugin.setIgdbClientSecret(value.trim());
       });
 
     new Setting(containerEl)
       .setName("Open dashboard")
-      .setDesc("Open or reveal the Game Dashboard view.")
+      .setDesc("Open or reveal the game dashboard view.")
       .addButton((button) =>
-        button.setButtonText("Open").onClick(async () => {
-          await this.plugin.activateView();
+        button.setButtonText("Open").onClick(() => {
+          void this.plugin.activateView();
         })
       );
+  }
+
+  private async updateGamesRoot(value: string): Promise<void> {
+    this.plugin.settings.gamesRoot = value.trim();
+    await this.plugin.saveSettings();
+    await this.plugin.refreshAllViews();
+  }
+
+  private async updateMainNoteName(value: string): Promise<void> {
+    const nextValue = value.trim() || DEFAULT_SETTINGS.mainNoteName;
+    this.plugin.settings.mainNoteName = nextValue.endsWith(".md") ? nextValue : `${nextValue}.md`;
+    await this.plugin.saveSettings();
+    await this.plugin.refreshAllViews();
   }
 }

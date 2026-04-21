@@ -3,11 +3,11 @@ import type GameDashboardPlugin from "./main";
 import { CreateGameInput, GameSearchCandidate } from "./types";
 
 const STATUSES = [
-  { value: "active", label: "进行中" },
-  { value: "backlog", label: "待开始" },
-  { value: "paused", label: "暂停" },
-  { value: "completed", label: "已完成" },
-  { value: "archived", label: "已归档" }
+  { value: "active", label: "Active" },
+  { value: "backlog", label: "Backlog" },
+  { value: "paused", label: "Paused" },
+  { value: "completed", label: "Completed" },
+  { value: "archived", label: "Archived" }
 ];
 
 function emptyInput(): CreateGameInput {
@@ -65,13 +65,13 @@ export class CreateGameModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("game-dashboard-create-modal");
-    contentEl.createEl("h2", { text: "Create Game Entry" });
+    contentEl.createEl("h2", { text: "Create game entry" });
 
     const searchSection = contentEl.createDiv({ cls: "game-dashboard-import-search" });
     const searchHeader = searchSection.createDiv({ cls: "game-dashboard-import-search-row" });
     this.searchInputEl = searchHeader.createEl("input", {
       type: "text",
-      placeholder: "Search IGDB, e.g. Disco Elysium"
+      placeholder: "Search metadata, e.g. Disco Elysium"
     });
     this.focusPrimaryInput();
     this.searchInputEl.addEventListener("input", () => {
@@ -79,20 +79,20 @@ export class CreateGameModal extends Modal {
       this.searchQuery = this.searchInputEl.value.trim();
     });
 
-    const searchButton = searchHeader.createEl("button", { text: "Search IGDB" });
-    searchButton.addEventListener("click", async () => {
-      await this.runSearch();
+    const searchButton = searchHeader.createEl("button", { text: "Search metadata" });
+    searchButton.addEventListener("click", () => {
+      void this.runSearch();
     });
 
-    this.searchInputEl.addEventListener("keydown", async (event) => {
+    this.searchInputEl.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
-      await this.runSearch();
+      void this.runSearch();
     });
 
     searchSection.createDiv({
       cls: "setting-item-description",
-      text: "配置好 IGDB Client ID / Client Secret 后，这里会从 IGDB 搜索并导入详细信息。"
+      text: "Configure an IGDB client ID and client secret to search and import detailed metadata."
     });
 
     this.resultsEl = searchSection.createDiv({ cls: "game-dashboard-import-results" });
@@ -117,11 +117,11 @@ export class CreateGameModal extends Modal {
     try {
       this.searchResults = await this.plugin.searchExternalGames(this.searchQuery);
       if (this.searchResults.length === 0) {
-        new Notice("No IGDB results found.");
+        new Notice("No results found.");
       }
     } catch (error) {
       console.error(error);
-      new Notice(error instanceof Error ? error.message : "IGDB search failed.");
+      new Notice(error instanceof Error ? error.message : "Metadata search failed.");
       this.searchResults = [];
     } finally {
       this.isSearching = false;
@@ -139,7 +139,7 @@ export class CreateGameModal extends Modal {
     }
 
     if (this.searchResults.length === 0) {
-      this.resultsEl.createDiv({ cls: "game-dashboard-import-empty", text: "No result yet. Search Steam / IGDB above." });
+      this.resultsEl.createDiv({ cls: "game-dashboard-import-empty", text: "No result yet. Search metadata above." });
       return;
     }
 
@@ -180,17 +180,24 @@ export class CreateGameModal extends Modal {
         action.disabled = true;
         action.textContent = "Loading...";
       }
-      action.addEventListener("click", async () => {
-        if (this.isApplying) return;
-        this.isApplying = true;
-        this.selectedCandidateId = candidate.id;
-        this.renderResults();
-        const enriched = await this.plugin.enrichImportedCandidate(candidate);
-        this.applyCandidate(enriched);
-        this.isApplying = false;
-        this.renderResults();
+      action.addEventListener("click", () => {
+        void this.applySearchResult(candidate);
       });
     });
+  }
+
+  private async applySearchResult(candidate: GameSearchCandidate): Promise<void> {
+    if (this.isApplying) return;
+    this.isApplying = true;
+    this.selectedCandidateId = candidate.id;
+    this.renderResults();
+    try {
+      const enriched = await this.plugin.enrichImportedCandidate(candidate);
+      this.applyCandidate(enriched);
+    } finally {
+      this.isApplying = false;
+      this.renderResults();
+    }
   }
 
   private renderForm(): void {
@@ -252,21 +259,25 @@ export class CreateGameModal extends Modal {
         button
           .setButtonText("Create")
           .setCta()
-          .onClick(async () => {
-            if (!this.values.title) {
-              new Notice("Game title is required.");
-              return;
-            }
-
-            try {
-              await this.plugin.createGame(this.values);
-              this.close();
-            } catch (error) {
-              console.error(error);
-              new Notice(error instanceof Error ? error.message : "Failed to create game entry.");
-            }
+          .onClick(() => {
+            void this.submit();
           })
       );
+  }
+
+  private async submit(): Promise<void> {
+    if (!this.values.title) {
+      new Notice("Game title is required.");
+      return;
+    }
+
+    try {
+      await this.plugin.createGame(this.values);
+      this.close();
+    } catch (error) {
+      console.error(error);
+      new Notice(error instanceof Error ? error.message : "Failed to create game entry.");
+    }
   }
 
   private applyCandidate(candidate: GameSearchCandidate): void {
@@ -304,7 +315,7 @@ export class CreateGameModal extends Modal {
     this.addReadOnly(this.readOnlyGridEl, "Developer", this.values.developer || "Auto");
     this.addReadOnly(this.readOnlyGridEl, "Publisher", this.values.publisher || "Auto");
     this.addReadOnly(this.readOnlyGridEl, "Platform", this.values.platform || "Auto");
-    this.addReadOnly(this.readOnlyGridEl, "Release Date", this.values.releaseDate || "Auto");
+    this.addReadOnly(this.readOnlyGridEl, "Release date", this.values.releaseDate || "Auto");
     this.addReadOnly(this.readOnlyGridEl, "Year", this.values.year || "Auto");
     this.progressInputEl = this.addInput(this.readOnlyGridEl, "Progress", progressValue, (value) => (this.values.progress = value));
     this.addReadOnly(this.readOnlyGridEl, "Rating", this.values.rating || "Auto");
@@ -326,12 +337,12 @@ export class CreateGameModal extends Modal {
     this.importedEl.empty();
     this.importedEl.createDiv({
       cls: "game-dashboard-imported-meta-title",
-      text: "Imported Metadata"
+      text: "Imported metadata"
     });
     if (this.selectedCandidateId !== null) {
       this.importedEl.createDiv({
         cls: "game-dashboard-imported-meta-source",
-        text: `Primary Source: ${this.searchResults.find((item) => item.id === this.selectedCandidateId)?.source === "steam" ? "Steam" : "IGDB"}`
+        text: `Primary source: ${this.searchResults.find((item) => item.id === this.selectedCandidateId)?.source === "steam" ? "Steam" : "IGDB"}`
       });
     }
     [

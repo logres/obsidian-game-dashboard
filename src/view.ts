@@ -8,26 +8,26 @@ type SortMode = "updated" | "name";
 type StatusFilter = "all" | "active" | "backlog" | "paused" | "completed" | "archived" | "unsorted";
 
 const STATUS_LABELS: Record<string, string> = {
-  active: "进行中",
-  backlog: "待开始",
-  paused: "暂停",
-  completed: "已完成",
-  archived: "已归档",
-  unsorted: "未整理"
+  active: "Active",
+  backlog: "Backlog",
+  paused: "Paused",
+  completed: "Completed",
+  archived: "Archived",
+  unsorted: "Unsorted"
 };
 
 const SECTIONS = [
   {
     key: "playing",
-    title: "正在游玩",
-    subtitle: "进行中 / 暂停中的游戏",
+    title: "Playing",
+    subtitle: "Active or paused games",
     collapsedByDefault: false,
     match: (entry: GameEntry) => entry.status === "active" || entry.status === "paused"
   },
   {
     key: "all",
-    title: "所有游戏",
-    subtitle: "完整游戏库",
+    title: "All games",
+    subtitle: "Full game library",
     collapsedByDefault: false,
     match: (_entry: GameEntry) => true
   }
@@ -45,9 +45,9 @@ function createNode<K extends keyof HTMLElementTagNameMap>(
 
 class DeleteGameConfirmModal extends Modal {
   private readonly entry: GameEntry;
-  private readonly onConfirm: () => Promise<void>;
+  private readonly onConfirm: () => void;
 
-  constructor(app: App, entry: GameEntry, onConfirm: () => Promise<void>) {
+  constructor(app: App, entry: GameEntry, onConfirm: () => void) {
     super(app);
     this.entry = entry;
     this.onConfirm = onConfirm;
@@ -60,25 +60,25 @@ class DeleteGameConfirmModal extends Modal {
     }
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl("h3", { text: "删除游戏" });
+    contentEl.createEl("h3", { text: "Delete game" });
     contentEl.createEl("p", {
-      text: `将删除“${this.entry.title}”对应的整个游戏文件夹。这个操作会删除 Game.md、关联笔记和 GameAssets。`
+      text: `This will delete the entire game folder for "${this.entry.title}", including Game.md, related notes, and GameAssets.`
     });
 
     new Setting(contentEl)
       .addButton((button) =>
-        button.setButtonText("取消").onClick(() => {
+        button.setButtonText("Cancel").onClick(() => {
           this.close();
         })
       )
       .addButton((button) =>
         button
-          .setButtonText("删除")
+          .setButtonText("Delete")
           .setWarning()
-          .onClick(async () => {
+          .onClick(() => {
             this.close();
             window.setTimeout(() => {
-              void this.onConfirm();
+              this.onConfirm();
               window.setTimeout(() => window.focus(), 0);
             }, 0);
           })
@@ -121,7 +121,7 @@ export class GameDashboardView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Game Dashboard";
+    return "Game dashboard";
   }
 
   getIcon(): string {
@@ -134,7 +134,7 @@ export class GameDashboardView extends ItemView {
     await this.refresh();
   }
 
-  async onClose(): Promise<void> {
+  onClose(): void {
     this.floatingTooltipEl?.remove();
     this.floatingTooltipEl = null;
   }
@@ -210,7 +210,7 @@ export class GameDashboardView extends ItemView {
   }
 
   private getScrollContainer(): HTMLElement {
-    return (this.contentEl.closest(".view-content") as HTMLElement | null) ?? this.contentEl;
+    return this.contentEl.closest<HTMLElement>(".view-content") ?? this.contentEl;
   }
 
   private preserveScroll(callback: () => void): void {
@@ -225,11 +225,11 @@ export class GameDashboardView extends ItemView {
   private renderHero(container: HTMLElement, entries: GameEntry[]): void {
     const hero = container.createDiv({ cls: "game-dashboard-hero" });
     const heading = hero.createDiv({ cls: "game-dashboard-hero-copy" });
-    heading.createDiv({ cls: "game-dashboard-kicker", text: "Game Library" });
-    heading.createEl("h2", { cls: "game-dashboard-hero-title", text: "Steam 风格浏览你的游戏库" });
+    heading.createDiv({ cls: "game-dashboard-kicker", text: "Game library" });
+    heading.createEl("h2", { cls: "game-dashboard-hero-title", text: "Browse your game library" });
     heading.createDiv({
       cls: "game-dashboard-hero-text",
-      text: "点击封面切换详情，双击封面打开主笔记。每个游戏文件夹包含一个主文档和若干关联笔记。"
+      text: "Select a cover to view details. Double-click a cover to open the main note. Each game folder contains one main note and related notes."
     });
 
     const stats = hero.createDiv({ cls: "game-dashboard-stats" });
@@ -237,9 +237,9 @@ export class GameDashboardView extends ItemView {
     const completedCount = entries.filter((entry) => entry.status === "completed").length;
 
     [
-      ["🎮 所有游戏", String(entries.length)],
-      ["🕹 正在游玩", String(playingCount)],
-      ["🏁 已完成", String(completedCount)]
+      ["🎮 All games", String(entries.length)],
+      ["🕹 Playing", String(playingCount)],
+      ["🏁 Completed", String(completedCount)]
     ].forEach(([label, value]) => {
       const stat = stats.createDiv({ cls: "game-dashboard-stat" });
       stat.createDiv({ cls: "game-dashboard-stat-label", text: label });
@@ -260,7 +260,7 @@ export class GameDashboardView extends ItemView {
     const search = left.createEl("input", {
       cls: "game-dashboard-input",
       type: "text",
-      placeholder: "搜索游戏、平台、开发商"
+      placeholder: "Search games, platforms, or developers"
     });
     search.value = this.query;
     search.addEventListener("input", () => {
@@ -270,8 +270,8 @@ export class GameDashboardView extends ItemView {
 
     const sort = left.createEl("select", { cls: "game-dashboard-select" });
     [
-      ["updated", "最近更新"],
-      ["name", "按标题"]
+      ["updated", "Recently updated"],
+      ["name", "Title"]
     ].forEach(([value, label]) => sort.createEl("option", { value, text: label }));
     sort.value = this.sortMode;
     sort.addEventListener("change", () => {
@@ -281,10 +281,10 @@ export class GameDashboardView extends ItemView {
 
     const right = toolbar.createDiv({ cls: "game-dashboard-toolbar-group" });
     const refreshButton = right.createEl("button", { cls: "game-dashboard-button subtle", text: "Refresh" });
-    refreshButton.addEventListener("click", async () => {
-      await this.refresh();
+    refreshButton.addEventListener("click", () => {
+      void this.refresh();
     });
-    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ New Game" });
+    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ New game" });
     createButton.addEventListener("click", () => this.plugin.openCreateGameModal());
   }
 
@@ -300,13 +300,13 @@ export class GameDashboardView extends ItemView {
 
     (
       [
-        ["all", "全部"],
-        ["active", "进行中"],
-        ["backlog", "待开始"],
-        ["paused", "暂停"],
-        ["completed", "已完成"],
-        ["archived", "已归档"],
-        ["unsorted", "未整理"]
+        ["all", "All"],
+        ["active", "Active"],
+        ["backlog", "Backlog"],
+        ["paused", "Paused"],
+        ["completed", "Completed"],
+        ["archived", "Archived"],
+        ["unsorted", "Unsorted"]
       ] satisfies Array<[StatusFilter, string]>
     ).forEach(([value, label]) => {
       const button = bar.createEl("button", {
@@ -325,7 +325,7 @@ export class GameDashboardView extends ItemView {
     const panel = container.createDiv({ cls: "game-dashboard-detail-panel" });
 
     if (!entry) {
-      panel.createDiv({ cls: "game-dashboard-empty game-dashboard-detail-empty", text: "当前没有可展示的游戏条目。" });
+      panel.createDiv({ cls: "game-dashboard-empty game-dashboard-detail-empty", text: "No game entries to show." });
       return;
     }
 
@@ -362,7 +362,7 @@ export class GameDashboardView extends ItemView {
       entry.platform,
       entry.year,
       entry.progress,
-      entry.rating && `评分 ${entry.rating}`
+      entry.rating && `Rating ${entry.rating}`
     ]
       .filter(Boolean)
       .join(" · ");
@@ -382,29 +382,29 @@ export class GameDashboardView extends ItemView {
 
     const summary = body.createEl("p", {
       cls: "game-dashboard-detail-summary",
-      text: entry.summary || "暂无摘要。后续可以通过主文档 frontmatter 或正文同步补全。"
+      text: entry.summary || "No summary yet. Add one in the main note frontmatter or body."
     });
     summary.setAttribute("dir", "auto");
 
     const actions = body.createDiv({ cls: "game-dashboard-action-row" });
-    actions.appendChild(this.createFileLink("打开主笔记", entry.mainFile, "game-dashboard-button primary"));
-    if (entry.officialUrl) actions.appendChild(this.createExternalLink("官方链接", entry.officialUrl, "game-dashboard-button"));
-    if (entry.detailUrl) actions.appendChild(this.createExternalLink("详情页", entry.detailUrl, "game-dashboard-button"));
-    const deleteButton = actions.createEl("button", { cls: "game-dashboard-button danger", text: "删除游戏" });
-    deleteButton.addEventListener("click", async () => {
-      new DeleteGameConfirmModal(this.app, entry, async () => {
+    actions.appendChild(this.createFileLink("Open main note", entry.mainFile, "game-dashboard-button primary"));
+    if (entry.officialUrl) actions.appendChild(this.createExternalLink("Official link", entry.officialUrl, "game-dashboard-button"));
+    if (entry.detailUrl) actions.appendChild(this.createExternalLink("Details page", entry.detailUrl, "game-dashboard-button"));
+    const deleteButton = actions.createEl("button", { cls: "game-dashboard-button danger", text: "Delete game" });
+    deleteButton.addEventListener("click", () => {
+      new DeleteGameConfirmModal(this.app, entry, () => {
         this.hideTooltip();
         if (this.selectedPath === entry.folder.path) this.selectedPath = null;
-        await this.plugin.deleteGame(entry);
+        void this.plugin.deleteGame(entry);
       }).open();
     });
 
     const side = content.createDiv({ cls: "game-dashboard-detail-side" });
     const related = side.createDiv({ cls: "game-dashboard-related" });
-    related.createEl("h4", { cls: "game-dashboard-side-title", text: "关联笔记" });
+    related.createEl("h4", { cls: "game-dashboard-side-title", text: "Related notes" });
     const notes = related.createDiv({ cls: "game-dashboard-note-list" });
     if (entry.notes.length === 0) {
-      notes.createDiv({ cls: "game-dashboard-empty-inline", text: "还没有关联笔记。" });
+      notes.createDiv({ cls: "game-dashboard-empty-inline", text: "No related notes yet." });
     } else {
       entry.notes.forEach((file) => {
         notes.appendChild(this.createFileLink(file.basename, file, "game-dashboard-note-chip"));
@@ -432,20 +432,20 @@ export class GameDashboardView extends ItemView {
 
       const toggle = header.createEl("button", {
         cls: "game-dashboard-toggle",
-        text: collapsed ? "展开" : "收起"
+        text: collapsed ? "Expand" : "Collapse"
       });
       toggle.addEventListener("click", () => {
         this.collapsedSections[section.key] = !this.collapsedSections[section.key];
         wrapper.toggleClass("is-collapsed", this.collapsedSections[section.key]);
         wrapper.toggleClass("is-expanded", !this.collapsedSections[section.key]);
-        toggle.setText(this.collapsedSections[section.key] ? "展开" : "收起");
+        toggle.setText(this.collapsedSections[section.key] ? "Expand" : "Collapse");
       });
 
       const body = wrapper.createDiv({ cls: "game-dashboard-section-body" });
       const grid = body.createDiv({ cls: "game-dashboard-grid" });
 
       if (items.length === 0) {
-        grid.createDiv({ cls: "game-dashboard-empty", text: "当前分组没有匹配条目。" });
+        grid.createDiv({ cls: "game-dashboard-empty", text: "No matching entries in this section." });
       } else {
         items.forEach((entry) => grid.appendChild(this.buildCard(entry)));
       }
@@ -457,7 +457,7 @@ export class GameDashboardView extends ItemView {
     endcap.createDiv({ cls: "game-dashboard-endcap-line" });
     endcap.createDiv({
       cls: "game-dashboard-endcap-text",
-      text: count > 0 ? `End of Library · ${count} visible` : "End of Library"
+      text: count > 0 ? `End of library · ${count} visible` : "End of library"
     });
   }
 
@@ -465,15 +465,15 @@ export class GameDashboardView extends ItemView {
     const card = createNode("button", { cls: "game-dashboard-card" });
     if (entry.folder.path === this.selectedPath) card.addClass("is-selected");
 
-    card.addEventListener("click", async () => {
+    card.addEventListener("click", () => {
       this.selectedPath = entry.folder.path;
       this.hideTooltip();
       this.preserveScroll(() => this.renderContent());
     });
 
-    card.addEventListener("dblclick", async () => {
+    card.addEventListener("dblclick", () => {
       this.hideTooltip();
-      if (entry.mainFile) await this.app.workspace.getLeaf("tab").openFile(entry.mainFile);
+      if (entry.mainFile) void this.app.workspace.getLeaf("tab").openFile(entry.mainFile);
     });
 
     card.addEventListener("mouseenter", () => this.showTooltip(card, entry));
@@ -502,7 +502,7 @@ export class GameDashboardView extends ItemView {
       cls: compact ? "game-dashboard-poster-overlay compact" : "game-dashboard-poster-overlay"
     });
     const meta = overlay.createDiv({ cls: "game-dashboard-poster-meta" });
-    meta.createDiv({ cls: "game-dashboard-poster-kind", text: "游戏" });
+    meta.createDiv({ cls: "game-dashboard-poster-kind", text: "Game" });
     meta.appendChild(this.createStatusPill(entry.status));
     overlay.createDiv({ cls: "game-dashboard-poster-title", text: entry.title });
 
@@ -523,9 +523,9 @@ export class GameDashboardView extends ItemView {
     const link = createNode(file ? "a" : "span", { text: label, cls: className });
     if (!file) return link;
     link.href = file.path;
-    link.addEventListener("click", async (event) => {
+    link.addEventListener("click", (event) => {
       event.preventDefault();
-      await this.app.workspace.getLeaf("tab").openFile(file);
+      void this.app.workspace.getLeaf("tab").openFile(file);
     });
     return link;
   }
@@ -542,7 +542,7 @@ export class GameDashboardView extends ItemView {
     if (!this.floatingTooltipEl) return;
     this.floatingTooltipEl.empty();
     const card = this.floatingTooltipEl.createDiv({ cls: "game-dashboard-tooltip-card" });
-    const title = card.createDiv({ cls: "game-dashboard-tooltip-title", text: entry.title });
+    card.createDiv({ cls: "game-dashboard-tooltip-title", text: entry.title });
     const preview = card.createDiv({ cls: "game-dashboard-tooltip-preview" });
     if (entry.posterFile) {
       preview.createEl("img", {
@@ -565,16 +565,20 @@ export class GameDashboardView extends ItemView {
       : Math.max(12, rect.left - tooltipWidth - gap);
     const top = Math.max(12, Math.min(rect.top + rect.height / 2 - tooltipHeight / 2, window.innerHeight - tooltipHeight - 12));
 
-    this.floatingTooltipEl.style.left = `${left}px`;
-    this.floatingTooltipEl.style.top = `${top}px`;
+    this.floatingTooltipEl.setCssProps({
+      "--game-dashboard-tooltip-left": `${left}px`,
+      "--game-dashboard-tooltip-top": `${top}px`
+    });
     this.floatingTooltipEl.classList.add("is-visible");
   }
 
   private hideTooltip(): void {
     if (!this.floatingTooltipEl) return;
     this.floatingTooltipEl.classList.remove("is-visible");
-    this.floatingTooltipEl.style.left = "-9999px";
-    this.floatingTooltipEl.style.top = "-9999px";
+    this.floatingTooltipEl.setCssProps({
+      "--game-dashboard-tooltip-left": "-9999px",
+      "--game-dashboard-tooltip-top": "-9999px"
+    });
   }
 
   private filterEntries(entries: GameEntry[]): GameEntry[] {

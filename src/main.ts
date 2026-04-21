@@ -93,15 +93,15 @@ export default class GameDashboardPlugin extends Plugin {
       (leaf) => new GameDashboardView(leaf, this)
     );
 
-    this.addRibbonIcon("gamepad-2", "Open Game Dashboard", async () => {
-      await this.activateView();
+    this.addRibbonIcon("gamepad-2", "Open dashboard", () => {
+      void this.activateView();
     });
 
     this.addCommand({
-      id: "open-game-dashboard",
-      name: "Open Game Dashboard",
-      callback: async () => {
-        await this.activateView();
+      id: "open-dashboard",
+      name: "Open dashboard",
+      callback: () => {
+        void this.activateView();
       }
     });
 
@@ -113,14 +113,14 @@ export default class GameDashboardPlugin extends Plugin {
       }
     });
 
-    this.registerEvent(this.app.vault.on("create", async () => this.requestRefreshAllViews()));
-    this.registerEvent(this.app.vault.on("delete", async () => this.requestRefreshAllViews()));
-    this.registerEvent(this.app.vault.on("rename", async () => this.requestRefreshAllViews()));
-    this.registerEvent(this.app.metadataCache.on("changed", async () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.vault.on("create", () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.vault.on("delete", () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.vault.on("rename", () => this.requestRefreshAllViews()));
+    this.registerEvent(this.app.metadataCache.on("changed", () => this.requestRefreshAllViews()));
   }
 
-  async onunload(): Promise<void> {
-    await this.app.workspace.detachLeavesOfType(GAME_DASHBOARD_VIEW_TYPE);
+  onunload(): void {
+    this.app.workspace.detachLeavesOfType(GAME_DASHBOARD_VIEW_TYPE);
   }
 
   async loadSettings(): Promise<void> {
@@ -146,7 +146,7 @@ export default class GameDashboardPlugin extends Plugin {
     return this.app.secretStorage.getSecret(GameDashboardPlugin.IGDB_CLIENT_SECRET_KEY) ?? "";
   }
 
-  async setIgdbClientSecret(value: string): Promise<void> {
+  setIgdbClientSecret(value: string): void {
     this.app.secretStorage.setSecret(GameDashboardPlugin.IGDB_CLIENT_SECRET_KEY, value);
   }
 
@@ -158,12 +158,12 @@ export default class GameDashboardPlugin extends Plugin {
     this.refreshSuppressedCount = Math.max(0, this.refreshSuppressedCount - 1);
     if (this.refreshSuppressedCount === 0 && this.pendingRefreshWhileSuppressed) {
       this.pendingRefreshWhileSuppressed = false;
-      void this.requestRefreshAllViews();
+      this.requestRefreshAllViews();
     }
   }
 
-  async getGames(): Promise<GameEntry[]> {
-    return await indexGames(this.app, this.settings);
+  getGames(): Promise<GameEntry[]> {
+    return Promise.resolve(indexGames(this.app, this.settings));
   }
 
   async refreshAllViews(): Promise<void> {
@@ -178,7 +178,7 @@ export default class GameDashboardPlugin extends Plugin {
     );
   }
 
-  async requestRefreshAllViews(): Promise<void> {
+  requestRefreshAllViews(): void {
     if (this.refreshSuppressedCount > 0) {
       this.pendingRefreshWhileSuppressed = true;
       return;
@@ -283,13 +283,13 @@ export default class GameDashboardPlugin extends Plugin {
     }
 
     await this.activateView();
-    await this.requestRefreshAllViews();
+    this.requestRefreshAllViews();
     new Notice(`Created ${title}`);
   }
 
   async deleteGame(entry: GameEntry): Promise<void> {
-    await this.app.vault.trash(entry.folder, false);
-    await this.requestRefreshAllViews();
+    await this.app.fileManager.trashFile(entry.folder);
+    this.requestRefreshAllViews();
     new Notice(`Deleted ${entry.title}`);
   }
 

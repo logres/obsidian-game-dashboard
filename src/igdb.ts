@@ -163,7 +163,7 @@ export class IgdbClient {
   private async getAccessToken(): Promise<string> {
     const clientSecret = this.plugin.getIgdbClientSecret();
     if (!this.plugin.settings.igdbClientId || !clientSecret) {
-      throw new Error("IGDB Client ID / Client Secret 未配置。");
+      throw new Error("IGDB client ID / client secret is not configured.");
     }
 
     if (this.tokenCache && this.tokenCache.expiresAt > Date.now() + 60_000) {
@@ -177,7 +177,7 @@ export class IgdbClient {
 
     const json = response.json as { access_token?: string; expires_in?: number };
     if (!json?.access_token) {
-      new Notice("IGDB token request failed.");
+      new Notice("Metadata token request failed.");
       throw new Error("Unable to fetch IGDB access token.");
     }
 
