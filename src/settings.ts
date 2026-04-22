@@ -23,10 +23,10 @@ export class GameDashboardSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Games root")
-      .setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain Game.md and an optional GameAssets folder.")
+      .setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain the main note and an optional assets folder.")
       .addText((text) =>
         text
-          .setPlaceholder("2-Knowledge/Media Library/Games")
+          .setPlaceholder("games")
           .setValue(this.plugin.settings.gamesRoot)
           .onChange((value) => {
             void this.updateGamesRoot(value);
@@ -58,11 +58,11 @@ export class GameDashboardSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Metadata import").setHeading();
 
     new Setting(containerEl)
-      .setName("Client id")
-      .setDesc("Twitch application client ID used for metadata search and import.")
+      .setName("Client identifier")
+      .setDesc("Application client identifier used for metadata search and import.")
       .addText((text) =>
         text
-          .setPlaceholder("Your Twitch client id")
+          .setPlaceholder("client identifier")
           .setValue(this.plugin.settings.igdbClientId)
           .onChange((value) => {
             this.plugin.settings.igdbClientId = value.trim();
@@ -72,7 +72,7 @@ export class GameDashboardSettingTab extends PluginSettingTab {
 
     const secretSetting = new Setting(containerEl)
       .setName("Client secret")
-      .setDesc("Stored with Obsidian SecretStorage and used only to request metadata access tokens.");
+      .setDesc("Stored securely and used only to request metadata access tokens.");
 
     secretSetting.controlEl.empty();
     new SecretComponent(this.app, secretSetting.controlEl)

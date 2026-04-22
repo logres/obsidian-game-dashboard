@@ -668,8 +668,8 @@ var GameDashboardSettingTab = class extends import_obsidian4.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian4.Setting(containerEl).setName("Games root").setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain Game.md and an optional GameAssets folder.").addText(
-      (text) => text.setPlaceholder("2-Knowledge/Media Library/Games").setValue(this.plugin.settings.gamesRoot).onChange((value) => {
+    new import_obsidian4.Setting(containerEl).setName("Games root").setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain the main note and an optional assets folder.").addText(
+      (text) => text.setPlaceholder("games").setValue(this.plugin.settings.gamesRoot).onChange((value) => {
         void this.updateGamesRoot(value);
       })
     );
@@ -685,13 +685,13 @@ var GameDashboardSettingTab = class extends import_obsidian4.PluginSettingTab {
       })
     );
     new import_obsidian4.Setting(containerEl).setName("Metadata import").setHeading();
-    new import_obsidian4.Setting(containerEl).setName("Client id").setDesc("Twitch application client ID used for metadata search and import.").addText(
-      (text) => text.setPlaceholder("Your Twitch client id").setValue(this.plugin.settings.igdbClientId).onChange((value) => {
+    new import_obsidian4.Setting(containerEl).setName("Client identifier").setDesc("Application client identifier used for metadata search and import.").addText(
+      (text) => text.setPlaceholder("client identifier").setValue(this.plugin.settings.igdbClientId).onChange((value) => {
         this.plugin.settings.igdbClientId = value.trim();
         void this.plugin.saveSettings();
       })
     );
-    const secretSetting = new import_obsidian4.Setting(containerEl).setName("Client secret").setDesc("Stored with Obsidian SecretStorage and used only to request metadata access tokens.");
+    const secretSetting = new import_obsidian4.Setting(containerEl).setName("Client secret").setDesc("Stored securely and used only to request metadata access tokens.");
     secretSetting.controlEl.empty();
     new import_obsidian4.SecretComponent(this.app, secretSetting.controlEl).setValue(this.plugin.getIgdbClientSecret()).onChange((value) => {
       this.plugin.setIgdbClientSecret(value.trim());
@@ -1043,7 +1043,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     refreshButton.addEventListener("click", () => {
       void this.refresh();
     });
-    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ New game" });
+    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ Create game" });
     createButton.addEventListener("click", () => this.plugin.openCreateGameModal());
   }
   renderFilterBar(entries) {
