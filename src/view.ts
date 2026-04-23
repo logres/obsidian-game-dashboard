@@ -284,7 +284,7 @@ export class GameDashboardView extends ItemView {
     refreshButton.addEventListener("click", () => {
       void this.refresh();
     });
-    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ Create game" });
+    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "Add game" });
     createButton.addEventListener("click", () => this.plugin.openCreateGameModal());
   }
 

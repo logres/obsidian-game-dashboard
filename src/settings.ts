@@ -26,7 +26,7 @@ export class GameDashboardSettingTab extends PluginSettingTab {
       .setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain the main note and an optional assets folder.")
       .addText((text) =>
         text
-          .setPlaceholder("games")
+          .setPlaceholder("Games folder")
           .setValue(this.plugin.settings.gamesRoot)
           .onChange((value) => {
             void this.updateGamesRoot(value);
@@ -62,7 +62,7 @@ export class GameDashboardSettingTab extends PluginSettingTab {
       .setDesc("Application client identifier used for metadata search and import.")
       .addText((text) =>
         text
-          .setPlaceholder("client identifier")
+          .setPlaceholder("Client identifier")
           .setValue(this.plugin.settings.igdbClientId)
           .onChange((value) => {
             this.plugin.settings.igdbClientId = value.trim();

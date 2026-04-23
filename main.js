@@ -669,7 +669,7 @@ var GameDashboardSettingTab = class extends import_obsidian4.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     new import_obsidian4.Setting(containerEl).setName("Games root").setDesc("Each direct subfolder under this path is treated as one game entry. Each game folder should contain the main note and an optional assets folder.").addText(
-      (text) => text.setPlaceholder("games").setValue(this.plugin.settings.gamesRoot).onChange((value) => {
+      (text) => text.setPlaceholder("Games folder").setValue(this.plugin.settings.gamesRoot).onChange((value) => {
         void this.updateGamesRoot(value);
       })
     );
@@ -686,7 +686,7 @@ var GameDashboardSettingTab = class extends import_obsidian4.PluginSettingTab {
     );
     new import_obsidian4.Setting(containerEl).setName("Metadata import").setHeading();
     new import_obsidian4.Setting(containerEl).setName("Client identifier").setDesc("Application client identifier used for metadata search and import.").addText(
-      (text) => text.setPlaceholder("client identifier").setValue(this.plugin.settings.igdbClientId).onChange((value) => {
+      (text) => text.setPlaceholder("Client identifier").setValue(this.plugin.settings.igdbClientId).onChange((value) => {
         this.plugin.settings.igdbClientId = value.trim();
         void this.plugin.saveSettings();
       })
@@ -1043,7 +1043,7 @@ var GameDashboardView = class extends import_obsidian6.ItemView {
     refreshButton.addEventListener("click", () => {
       void this.refresh();
     });
-    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "+ Create game" });
+    const createButton = right.createEl("button", { cls: "game-dashboard-button", text: "Add game" });
     createButton.addEventListener("click", () => this.plugin.openCreateGameModal());
   }
   renderFilterBar(entries) {
